@@ -33,7 +33,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-const isStudent = (req, res, next) => {
+const isSinhVien = (req, res, next) => {
     // req.user được tạo ra từ middleware authenticateToken chạy trước đó
     if (req.user && req.user.vaiTro === 'sinhvien') {
         next(); // Nếu đúng là sinh viên, cho đi tiếp
@@ -42,7 +42,7 @@ const isStudent = (req, res, next) => {
     }
 };
 
-const isTeacher = (req, res, next) => {
+const isGiangVien = (req, res, next) => {
     if (req.user && req.user.vaiTro === 'giangvien') {
         next();
     } else {
@@ -60,7 +60,7 @@ const isAdmin = (req, res, next) => {
 
 module.exports = {
     authenticateToken,
-    isStudent,
-    isTeacher,
+    isSinhVien,
+    isGiangVien,
     isAdmin
 };

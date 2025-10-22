@@ -6,8 +6,8 @@ const express = require('express');
 const db = require('./models');
 const authRoutes = require('./routes/AuthRoutes');
 const adminRoutes = require('./routes/AdminRoutes');
-const studentRoutes = require('./routes/StudentRoutes');
-const teacherRoutes = require('./routes/TeacherRoutes');
+const sinhVienRoutes = require('./routes/SinhVienRoutes');
+const giangVienRoutes = require('./routes/GiangVienRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,11 +15,11 @@ const PORT = process.env.PORT || 3000;
 // Middleware để xử lý JSON
 app.use(express.json());
 
-// thêm  authenticateToken, isAdmin, isStudent vào app.use()
+// thêm  authenticateToken, isAdmin, isSinhVien vào app.use()
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/student', studentRoutes);
-app.use('/teacher', teacherRoutes);
+app.use('/sinh-vien', sinhVienRoutes);
+app.use('/giang-vien', giangVienRoutes);
 
 // định nghĩa một route lắng nghe các GET request trên root URL(/)
 // khi client gửi request GET dến root URL (http://localhost:3000/),
