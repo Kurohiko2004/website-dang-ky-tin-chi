@@ -12,10 +12,7 @@ const giangVienRoutes = require('./routes/GiangVienRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware để xử lý JSON
 app.use(express.json());
-
-// thêm  authenticateToken, isAdmin, isSinhVien vào app.use()
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/sinh-vien', sinhVienRoutes);

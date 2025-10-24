@@ -27,6 +27,14 @@ const DangKyHoc = sequelize.define('DangKyHoc', {
     timestamps: false,
     freezeTableName: true,
     tableName: 'dangkyhoc',
+
+    indexes: [
+        {
+            unique: true,
+            fields: ['SinhVien_id', 'LopTinChi_id'],
+            name: 'UQ_SinhVien_Lop' // 
+        }
+    ]
 });
 
 module.exports = DangKyHoc;

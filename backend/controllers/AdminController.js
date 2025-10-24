@@ -1,5 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
+const { Op } = require("sequelize"); //crud tạo sv, gv
 
 const layThongTinCaNhan = async (req, res) => {
     try {
@@ -54,34 +55,81 @@ const layDonDangKyHoc = async (req, res) => {
 // ấn submit --> trangThaiMoi = duyệt, lấy trangThaiMoi trong request body
 // tìm donDangKy trong csdl theo id, nếu tìm được thì gán trangThaiMoi vao DonDangKy.trangThai
 const xuLyDonDangKyHoc = async (req, res) => {
+    // Start a transaction for consistency
+    const t = await db.sequelize.transaction();
     try {
-        // lấy thông tin từ trong req: id từ url, trangThaiMoi từ dữ liệu mà client gửi ở 
-        // trong body của request (dữ liệu có dạng json)
         const { id } = req.params;
-        const { trangThaiMoi } = req.body; //vd: trangThaiMoi = 'Đã duyệt'
+        const { trangThaiMoi } = req.body;
 
-        // tìm đơn đăng ký trong csdl theo id, return an instance if found
-        const donDangKy = await db.DangKyHoc.findByPk(id);
+        // Input validation for trangThaiMoi
+        if (!['Đã duyệt', 'Từ chối'].includes(trangThaiMoi)) {
+            await t.rollback(); // Rollback immediately on invalid input
+            return res.status(400).json({ message: 'Trạng thái mới không hợp lệ. Chỉ chấp nhận "Đã duyệt" hoặc "Từ chối".' });
+        }
 
-        // return null if not found
+        // Find the registration request within the transaction
+        const donDangKy = await db.DangKyHoc.findByPk(id, {
+            transaction: t,
+            lock: t.LOCK.UPDATE // Lock the row during the transaction
+        });
+
         if (!donDangKy) {
+            await t.rollback();
             return res.status(404).json({ message: 'Không tìm thấy đơn đăng ký!' });
         }
 
-        // nếu tìm thấy thì cập nhật trạng thái đơn rồi lưu thay đổi vào csdl bằng save()
-        donDangKy.trangThai = trangThaiMoi;
-        await donDangKy.save();
+        // --- ADDED CHECK: Only perform check if APPROVING ---
+        if (trangThaiMoi === 'Đã duyệt' && donDangKy.trangThai !== 'Đã duyệt') { // Also check if it's not already approved
+            // Get the class (LopTinChi) information
+            const lopTinChi = await db.LopTinChi.findByPk(donDangKy.LopTinChi_id, {
+                attributes: ['id', 'soLuongToiDa'],
+                transaction: t // Ensure consistent read
+            });
 
-        // gửi lại kết quả json chứa data (bản ghi đã cập nhật) để cập nhật GD
-        // bên client thành "đon đã duyệt"
+            // Should not happen if data is consistent, but good to check
+            if (!lopTinChi) {
+                throw new Error(`Lớp tín chỉ ${donDangKy.LopTinChi_id} liên kết với đơn đăng ký không tồn tại.`);
+            }
+
+            // Check capacity if soLuongToiDa is set
+            if (lopTinChi.soLuongToiDa !== null && lopTinChi.soLuongToiDa > 0) {
+                const soLuongHienTai = await db.DangKyHoc.count({
+                    where: {
+                        LopTinChi_id: donDangKy.LopTinChi_id,
+                        trangThai: 'Đã duyệt' // Count only approved students
+                    },
+                    transaction: t // Count within the transaction
+                });
+
+                // If the class is full or over capacity
+                if (soLuongHienTai >= lopTinChi.soLuongToiDa) {
+                    await t.rollback(); // Rollback the transaction
+                    return res.status(400).json({ // Use 400 Bad Request as the action cannot be fulfilled
+                        message: `Không thể duyệt đơn đăng ký. Lớp tín chỉ '${lopTinChi.id}' đã đạt số lượng tối đa (${lopTinChi.soLuongToiDa}).`
+                    });
+                }
+            }
+            // If capacity check passes (or no limit), proceed to update status
+        }
+        // --- END OF ADDED CHECK ---
+
+        // Update the status (works for both 'Đã duyệt' and 'Từ chối')
+        donDangKy.trangThai = trangThaiMoi;
+        await donDangKy.save({ transaction: t }); // Save within the transaction
+
+        // If successful, commit the transaction
+        await t.commit();
+
         res.status(200).json({
             message: 'Cập nhật đơn đăng ký thành công!',
             data: donDangKy
         });
 
     } catch (error) {
+        // Ensure rollback happens on any error during the try block
+        await t.rollback();
         res.status(500).json({
-            messgage: 'Lỗi server - Internal Server Error',
+            message: 'Lỗi server - Internal Server Error',
             error: error.message
         });
     }
@@ -369,7 +417,7 @@ const taoSinhVien = async (req, res) => {
         }
 
         const sinhVien = await db.SinhVien.findOne({
-            where: { [db.Sequelize.Op.or]: [{ id: id }, { email: email }] }
+            where: { [Op.or]: [{ id: id }, { email: email }] }
         });
         if (sinhVien) {
             return res.status(409).json({ message: `Sinh viên với ID '${id}' hoặc Email '${email}' đã tồn tại.` });
@@ -493,7 +541,7 @@ const taoGiangVien = async (req, res) => {
         if (!id || !hoTen || !email || !password) {
             return res.status(400).json({ message: 'Vui lòng cung cấp đủ thông tin bắt buộc: id, hoTen, email, password.' });
         }
-        const gvTonTai = await db.GiangVien.findOne({ where: { [db.Sequelize.Op.or]: [{ id: id }, { email: email }] } });
+        const gvTonTai = await db.GiangVien.findOne({ where: { [Op.or]: [{ id: id }, { email: email }] } });
         if (gvTonTai) {
             return res.status(409).json({ message: `Giảng viên với ID '${id}' hoặc Email '${email}' đã tồn tại.` });
         }
