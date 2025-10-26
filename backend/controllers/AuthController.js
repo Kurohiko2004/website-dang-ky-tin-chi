@@ -53,7 +53,7 @@ const login = async (req, res) => {
         };
 
         // 3. Sign token
-        const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: '8h' });
 
         // 4. Gửi token về cho client
         res.status(200).json({

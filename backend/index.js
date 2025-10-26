@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const db = require('./models');
 const authRoutes = require('./routes/AuthRoutes');
 const adminRoutes = require('./routes/AdminRoutes');
@@ -11,6 +12,11 @@ const giangVienRoutes = require('./routes/GiangVienRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(cors({
+    origin: 'http://localhost:5173', // Vite dev server
+    credentials: true
+}));
 
 app.use(express.json());
 app.use('/auth', authRoutes);
