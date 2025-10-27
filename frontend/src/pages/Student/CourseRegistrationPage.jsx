@@ -24,7 +24,7 @@ function Notification({ message, type, onClose }) {
 }
 
 
-function DangKyHocPhanPage() {
+function CourseRegistrationPage() {
     const { user, token } = useContext(AuthContext); // Lấy thông tin user và token
     const [availableCourses, setAvailableCourses] = useState([]); // Danh sách lớp lấy từ API
     const [selectedCourses, setSelectedCourses] = useState([]); // Danh sách lớp SV đã chọn
@@ -43,7 +43,7 @@ function DangKyHocPhanPage() {
             setLoading(true);
             setError(null);
             // --- TODO: Xác định kyHoc, namHoc hiện tại ---
-            // Ví dụ: lấy từ config hoặc hardcode
+            // hardcode
             const currentKyHoc = 1;
             const currentNamHoc = '2025-2026';
             // ---------------------------------------------
@@ -62,6 +62,9 @@ function DangKyHocPhanPage() {
                     shift: lop.kipHoc || 'N/A', // Đảm bảo cột kipHoc tồn tại
                     credits: lop.MonHoc?.soTinChi || 0 // Số tín chỉ từ MonHoc
                 }));
+
+                console.log("Formatted Courses:", formattedCourses);
+
                 setAvailableCourses(formattedCourses);
             } catch (err) {
                 setError(err.message || 'Không thể tải danh sách lớp tín chỉ.');
@@ -85,40 +88,56 @@ function DangKyHocPhanPage() {
 
     // Xử lý khi chọn một lớp
     const handleSelectCourse = (course) => {
+
+        console.log("Selecting course:", course); // Log lớp đang định chọn
+        console.log("Currently selected:", selectedCourses); // Log các lớp đã chọn
+
         // Kiểm tra logic như trong code gốc
         if (course.slots === 0) {
+            console.log("DEBUG: Check failed - Slots = 0"); // <-- LOG REASON
             showNotification('Lớp này đã hết slot!', 'error');
             return;
         }
-        if (selectedCourses.find(c => c.id === course.id)) {
+        const alreadySelectedById = selectedCourses.find(c => c.id === course.id);
+        if (alreadySelectedById) {
+            console.log("DEBUG: Check failed - Already selected by ID:", alreadySelectedById); // <-- LOG REASON
             showNotification('Bạn đã chọn lớp này rồi!', 'warning');
             return;
         }
         // Kiểm tra trùng môn học (courseCode)
-        if (selectedCourses.find(c => c.courseCode === course.courseCode)) {
+        const alreadySelectedByCode = selectedCourses.find(c => c.courseCode === course.courseCode);
+        if (alreadySelectedByCode) {
+            console.log("DEBUG: Check failed - Duplicate course code found:", alreadySelectedByCode, "Comparing with:", course.courseCode); // <-- LOG REASON & VALUES
             showNotification(`Bạn đã chọn một lớp khác của môn học ${course.courseName} rồi!`, 'warning');
             return;
         }
 
         const newTotalCredits = totalCredits + course.credits;
+        console.log("DEBUG: Checking credits - New total:", newTotalCredits, "Max:", MAX_CREDITS); // <-- LOG CREDIT CHECK
         if (newTotalCredits > MAX_CREDITS) {
+            console.log("DEBUG: Check failed - Exceeds max credits"); // <-- LOG REASON
             showNotification(`Không thể đăng ký! Tổng số tín chỉ sẽ vượt quá ${MAX_CREDITS} (${newTotalCredits}/${MAX_CREDITS})`, 'error');
             return;
         }
 
         // Kiểm tra trùng lịch học
         const newSlot = `${course.schedule}_${course.shift}`;
+        console.log("DEBUG: Checking schedule conflict for slot:", newSlot); // <-- LOG SLOT BEING CHECKED
         if (course.schedule && course.shift) {
-            const conflict = selectedCourses.some(selected =>
-                selected.schedule && selected.shift && `${selected.schedule}_${selected.shift}` === newSlot
+            const conflict = selectedCourses.some(selected => {
+                const selectedSlot = selected.schedule && selected.shift && `${selected.schedule}_${selected.shift}`;
+                return selectedSlot === newSlot;
+            }
             );
             if (conflict) {
+                console.log("DEBUG: Check failed - Schedule conflict detected"); // <-- LOG REASON
                 showNotification(`Lịch học của lớp ${course.classCode} bị trùng với một lớp bạn đã chọn!`, 'error');
                 return;
             }
         }
 
-
+        // Nếu tất cả các kiểm tra đều qua:
+        console.log("DEBUG: All checks passed. Adding course to selection."); // <-- LOG SUCCESS BEFORE ADDING
         setSelectedCourses([...selectedCourses, course]);
         showNotification(`Đã thêm ${course.courseName} vào danh sách đăng ký`, 'success');
     };
@@ -259,7 +278,7 @@ function DangKyHocPhanPage() {
                                         <td className="px-4 py-3 text-sm text-gray-600">
                                             <div className="flex items-center gap-1">
                                                 <Clock size={14} />
-                                                {course.shift}
+                                                {course.shift ? course.shift.replace('-', 'h-') + 'h' : 'N/A'}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-sm font-medium text-gray-900">{course.credits}</td>
@@ -362,4 +381,4 @@ function DangKyHocPhanPage() {
     );
 }
 
-export default DangKyHocPhanPage;
+export default CourseRegistrationPage;

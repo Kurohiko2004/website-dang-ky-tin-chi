@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết lớp học - Giảng viên</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-menu li.active {
+            background-color: #3498db;
+            border-left: 4px solid #2980b9;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .breadcrumb {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .class-info-card {
+            background-color: white;
+            padding: 25px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .class-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .class-title {
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .class-code {
+            color: #3498db;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-right: 8px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+        }
+
+        .actions-bar {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box input {
+            padding: 10px 15px;
+            border: 1px solid #dce0e3;
+            border-radius: 5px;
+            width: 300px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .table-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        thead {
+            background-color: #34495e;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        th {
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        th:nth-child(1) {
+            width: 50px;
+        }
+
+        th:nth-child(2) {
+            width: 100px;
+        }
+
+        th:nth-child(3) {
+            width: 200px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #ecf0f1;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        td:nth-child(3) {
+            text-align: left;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .score-input {
+            width: 60px;
+            padding: 6px 8px;
+            border: 1px solid #dce0e3;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .score-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .score-display {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .grade-a-plus {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .grade-a {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .grade-b-plus {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .grade-b {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .grade-c-plus {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .grade-c {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .grade-d {
+            background-color: #e67e22;
+            color: white;
+        }
+
+        .grade-f {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .student-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .student-id {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>👨‍🏫 Giảng viên</h2>
+            <p>TS. Nguyễn Văn A</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li>📊 Dashboard</li>
+            <li class="active">📚 Xem lớp học</li>
+            <li>📝 Nhập điểm</li>
+            <li>📄 Báo cáo</li>
+            <li>⚙️ Cài đặt</li>
+            <li>🚪 Đăng xuất</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="breadcrumb">
+            <a href="#" onclick="goBack()">← Quay lại danh sách lớp</a>
+        </div>
+
+        <div class="class-info-card">
+            <div class="class-info-header">
+                <div>
+                    <div class="class-code">INT3110</div>
+                    <div class="class-title">Lập trình mạng với C++</div>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Học kỳ:</span>
+                    <span class="info-value">1</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Năm học:</span>
+                    <span class="info-value">2025-2026</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Số tín chỉ:</span>
+                    <span class="info-value">3</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Sĩ số:</span>
+                    <span class="info-value">45 sinh viên</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Lịch học:</span>
+                    <span class="info-value">Thứ 3, 13 (9h00-11h00)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Phòng:</span>
+                    <span class="info-value">301-T1</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <div class="search-box">
+                <input type="text" placeholder="🔍 Tìm kiếm theo tên hoặc mã sinh viên..." id="searchInput" onkeyup="searchStudent()">
+            </div>
+            <div class="button-group">
+                <button class="btn-success" onclick="saveScores()">💾 Lưu điểm</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>TT</th>
+                        <th>Mã SV</th>
+                        <th>Tên sinh viên</th>
+                        <th>Điểm CC</th>
+                        <th>Điểm bài tập</th>
+                        <th>Điểm giữa kỳ</th>
+                        <th>Điểm cuối kỳ</th>
+                        <th>Tổng kết<br>(hệ 10)</th>
+                        <th>Tổng kết<br>(hệ 4)</th>
+                        <th>Tổng kết<br>(chữ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td class="student-id">20210001</td>
+                        <td class="student-name">Nguyễn Văn An</td>
+                        <td><input type="number" class="score-input" value="8.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="9" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="10" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="9" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">9.1</td>
+                        <td class="score-display">4.0</td>
+                        <td><span class="grade-badge grade-a-plus">A+</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td class="student-id">20210002</td>
+                        <td class="student-name">Trần Thị Bình</td>
+                        <td><input type="number" class="score-input" value="8" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="6.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">6.4</td>
+                        <td class="score-display">2.0</td>
+                        <td><span class="grade-badge grade-c">C</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td class="student-id">20210003</td>
+                        <td class="student-name">Lê Văn Cường</td>
+                        <td><input type="number" class="score-input" value="9" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="9.6" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">8.4</td>
+                        <td class="score-display">3.5</td>
+                        <td><span class="grade-badge grade-b-plus">B+</span></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td class="student-id">20210004</td>
+                        <td class="student-name">Phạm Thị Dung</td>
+                        <td><input type="number" class="score-input" value="10" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="6.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="6.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="4.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">5.9</td>
+                        <td class="score-display">2.0</td>
+                        <td><span class="grade-badge grade-c">C</span></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td class="student-id">20210005</td>
+                        <td class="student-name">Hoàng Văn Em</td>
+                        <td><input type="number" class="score-input" value="9" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="9.2" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="9.2" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8.7" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">8.9</td>
+                        <td class="score-display">3.7</td>
+                        <td><span class="grade-badge grade-a">A</span></td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td class="student-id">20210006</td>
+                        <td class="student-name">Vũ Thị Phương</td>
+                        <td><input type="number" class="score-input" value="8" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8.4" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">8.3</td>
+                        <td class="score-display">3.5</td>
+                        <td><span class="grade-badge grade-b-plus">B+</span></td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td class="student-id">20210007</td>
+                        <td class="student-name">Đặng Văn Giang</td>
+                        <td><input type="number" class="score-input" value="10" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">8.5</td>
+                        <td class="score-display">3.7</td>
+                        <td><span class="grade-badge grade-a">A</span></td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td class="student-id">20210008</td>
+                        <td class="student-name">Ngô Thị Hoa</td>
+                        <td><input type="number" class="score-input" value="10" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="9.5" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td><input type="number" class="score-input" value="8" min="0" max="10" step="0.1" onchange="calculateTotal(this)"></td>
+                        <td class="score-display">8.8</td>
+                        <td class="score-display">3.7</td>
+                        <td><span class="grade-badge grade-a">A</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function calculateTotal(input) {
+            // Hàm tính điểm tổng kết (demo - chưa tính toán thực tế)
+            console.log('Điểm đã thay đổi:', input.value);
+        }
+
+        function searchStudent() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById('studentTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const tdName = tr[i].getElementsByTagName('td')[2];
+                const tdId = tr[i].getElementsByTagName('td')[1];
+                
+                if (tdName || tdId) {
+                    const txtName = tdName.textContent || tdName.innerText;
+                    const txtId = tdId.textContent || tdId.innerText;
+                    
+                    if (txtName.toUpperCase().indexOf(filter) > -1 || txtId.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = '';
+                    } else {
+                        tr[i].style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function saveScores() {
+            alert('Đã lưu điểm thành công! ✅');
+        }
+
+        function exportExcel() {
+            alert('Đang xuất file Excel... 📊');
+        }
+
+        function goBack() {
+            alert('Quay lại danh sách lớp học');
+            // window.history.back();
+        }
+    </script>
+</body>
+</html>

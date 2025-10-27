@@ -47,8 +47,8 @@ function Sidebar({ userRole }) {
                 {userRole === 'admin' && (
                     <>
                         <NavLink to="/admin/duyet-don" className={({ isActive }) => `${linkStyle} ${isActive ? activeLinkStyle : ''}`}>Duyệt đơn</NavLink>
-                        <NavLink to="/admin/quan-ly/mon-hoc" className={({ isActive }) => `${linkStyle} ${isActive ? activeLinkStyle : ''}`}>Quản lý Môn học</NavLink>
-                        {/* Add other admin management links */}
+                        <NavLink to="/admin/mon-hoc" className={({ isActive }) => `${linkStyle} ${isActive ? activeLinkStyle : ''}`}>Quản lý Môn học</NavLink>
+                        <NavLink to="/admin/lop-tin-chi" className={({ isActive }) => `${linkStyle} ${isActive ? activeLinkStyle : ''}`}>Quản lý Lớp tín chỉ</NavLink>
                     </>
                 )}
 

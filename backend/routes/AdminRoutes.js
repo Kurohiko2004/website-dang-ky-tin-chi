@@ -5,7 +5,7 @@ const { authenticateToken, isAdmin } = require('../middleware/authMiddleware');
 
 router.get('/thong-tin', authenticateToken, isAdmin, adminController.layThongTinCaNhan);
 
-router.get('/don-cho-duyet', authenticateToken, isAdmin, adminController.layDonDangKyHoc);
+router.get('/duyet-don', authenticateToken, isAdmin, adminController.layDonDangKyHoc);
 router.put('/duyet-don/:id', authenticateToken, isAdmin, adminController.xuLyDonDangKyHoc);
 
 
@@ -16,7 +16,6 @@ router.route('/mon-hoc/:id')
     .get(authenticateToken, isAdmin, adminController.layMonHocTheoId)
     .put(authenticateToken, isAdmin, adminController.capNhatMonHoc)
     .delete(authenticateToken, isAdmin, adminController.xoaMonHoc);
-
 
 router.route('/lop-tin-chi')
     .post(authenticateToken, isAdmin, adminController.taoLopTinChi)

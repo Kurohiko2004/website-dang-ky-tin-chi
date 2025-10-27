@@ -173,7 +173,7 @@ const layCacLopDangMo = async (req, res) => {
             ],
             include: [
                 { model: db.GiangVien, attributes: ['hoTen'] },
-                { model: db.MonHoc, attributes: ['ten', 'soTinChi'] }
+                { model: db.MonHoc, attributes: ['id', 'ten', 'soTinChi'] }
             ],
             raw: true,
             nest: true

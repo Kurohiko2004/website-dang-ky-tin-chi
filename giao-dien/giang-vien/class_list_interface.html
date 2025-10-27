@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem lớp học - Giảng viên</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-menu li.active {
+            background-color: #3498db;
+            border-left: 4px solid #2980b9;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .semester-info {
+            font-size: 16px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .class-table-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px 30px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .table-header h2 {
+            font-size: 20px;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #34495e;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        th:first-child {
+            text-align: center;
+            width: 60px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            color: #2c3e50;
+        }
+
+        td:first-child {
+            text-align: center;
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .credits-badge {
+            display: inline-block;
+            background-color: #e8f4f8;
+            color: #3498db;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .student-count {
+            display: inline-block;
+            background-color: #e8f5e9;
+            color: #27ae60;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .btn-detail {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-detail:hover {
+            background-color: #2980b9;
+        }
+
+        .schedule-info {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .code-subject {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .name-subject {
+            color: #34495e;
+            margin-top: 3px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>👨‍🏫 Giảng viên</h2>
+            <p>TS. Nguyễn Văn A</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li>📊 Dashboard</li>
+            <li class="active">📚 Xem lớp học</li>
+            <li>📝 Nhập điểm</li>
+            <li>📄 Báo cáo</li>
+            <li>⚙️ Cài đặt</li>
+            <li>🚪 Đăng xuất</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Xem lớp học</h1>
+            <p class="semester-info">Học kỳ 2 Năm học 2024-2025 (TB học kỳ: 3.13, đạt: 19 tín chỉ, tích lũy: 35 tín chỉ)</p>
+        </div>
+
+        <div class="class-table-container">
+            <div class="table-header">
+                <h2>Danh sách lớp học phần</h2>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã HP</th>
+                        <th>Tên học phần</th>
+                        <th>Số TC</th>
+                        <th>Sĩ số</th>
+                        <th>Lịch học</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>
+                            <div class="code-subject">INT3110</div>
+                        </td>
+                        <td>
+                            <div class="name-subject">Lập trình mạng với C++</div>
+                        </td>
+                        <td><span class="credits-badge">3 TC</span></td>
+                        <td><span class="student-count">45 SV</span></td>
+                        <td>
+                            <div class="schedule-info">Thứ 3, 13 (9h00-11h00)</div>
+                            <div class="schedule-info">Phòng: 301-T1</div>
+                        </td>
+                        <td><button class="btn-detail" onclick="viewClassDetail('INT3110')">Chi tiết</button></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>
+                            <div class="code-subject">INT3111</div>
+                        </td>
+                        <td>
+                            <div class="name-subject">Kỹ thuật đồ họa</div>
+                        </td>
+                        <td><span class="credits-badge">3 TC</span></td>
+                        <td><span class="student-count">38 SV</span></td>
+                        <td>
+                            <div class="schedule-info">Thứ 5, 7 (13h00-15h00)</div>
+                            <div class="schedule-info">Phòng: 205-T2</div>
+                        </td>
+                        <td><button class="btn-detail" onclick="viewClassDetail('INT3111')">Chi tiết</button></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>
+                            <div class="code-subject">INT3113</div>
+                        </td>
+                        <td>
+                            <div class="name-subject">Cơ sở dữ liệu</div>
+                        </td>
+                        <td><span class="credits-badge">3 TC</span></td>
+                        <td><span class="student-count">50 SV</span></td>
+                        <td>
+                            <div class="schedule-info">Thứ 2, 4 (7h00-9h00)</div>
+                            <div class="schedule-info">Phòng: 103-T1</div>
+                        </td>
+                        <td><button class="btn-detail" onclick="viewClassDetail('INT3113')">Chi tiết</button></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>
+                            <div class="code-subject">INT3140</div>
+                        </td>
+                        <td>
+                            <div class="name-subject">Nhập môn công nghệ phần mềm</div>
+                        </td>
+                        <td><span class="credits-badge">3 TC</span></td>
+                        <td><span class="student-count">42 SV</span></td>
+                        <td>
+                            <div class="schedule-info">Thứ 6, 9 (15h00-17h00)</div>
+                            <div class="schedule-info">Phòng: 408-T3</div>
+                        </td>
+                        <td><button class="btn-detail" onclick="viewClassDetail('INT3140')">Chi tiết</button></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>
+                            <div class="code-subject">MUL3148</div>
+                        </td>
+                        <td>
+                            <div class="name-subject">Bản quyền số</div>
+                        </td>
+                        <td><span class="credits-badge">2 TC</span></td>
+                        <td><span class="student-count">35 SV</span></td>
+                        <td>
+                            <div class="schedule-info">Thứ 4, 11 (9h00-11h00)</div>
+                            <div class="schedule-info">Phòng: 502-T2</div>
+                        </td>
+                        <td><button class="btn-detail" onclick="viewClassDetail('MUL3148')">Chi tiết</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function viewClassDetail(classCode) {
+            alert('Đang chuyển đến trang chi tiết lớp học: ' + classCode);
+            // Trong thực tế, sẽ chuyển hướng đến trang chi tiết
+            // window.location.href = '/class-detail?code=' + classCode;
+        }
+    </script>
+</body>
+</html>

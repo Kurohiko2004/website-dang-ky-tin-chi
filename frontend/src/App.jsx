@@ -4,9 +4,18 @@ import LoginPage from "./pages/LoginPage";
 import DashboardLayout from './components/Layout/DashboardLayout';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
-import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
+import ProtectedRoute from './components/ProtectedRoute';
 
-import DangKyHocPhanPage from './pages/Student/DangKyHocPhanPage';
+import CourseRegistrationPage from './pages/Student/CourseRegistrationPage';
+import StudentGradesPage from './pages/Student/StudentGradesPage';
+import StudentSchedulePage from './pages/Student/StudentSchedulePage';
+
+import TeacherClassListPage from './pages/Teacher/TeacherClassListPage';
+import TeacherClassDetailPage from './pages/Teacher/TeacherClassDetailPage';
+
+import AdminMonHocCRUDPage from './pages/Admin/AdminMonHocCRUDPage';
+import AdminLopTinChiCRUDPage from './pages/Admin/AdminLopTinChiCRUDPage';
+import AdminApprovePage from './pages/Admin/AdminApprovePage';
 
 function App() {
   return (
@@ -23,20 +32,21 @@ function App() {
       >
         {/* Set HomePage as the index route for the layout */}
         <Route index element={<HomePage />} />
+
+        {/* --- Route cho Giảng viên --- */}
         <Route path="thong-tin-ca-nhan" element={<ProfilePage />} />
-        <Route path="sinh-vien/dang-ky" element={<DangKyHocPhanPage />} />
+        <Route path="sinh-vien/dang-ky" element={<CourseRegistrationPage />} />
+        <Route path="sinh-vien/ket-qua" element={<StudentGradesPage />} />
+        <Route path="sinh-vien/lich-hoc" element={<StudentSchedulePage />} />
 
+        {/* --- Route cho Giảng viên --- */}
+        <Route path="giang-vien/lop-hoc" element={<TeacherClassListPage />} />
+        <Route path="giang-vien/lop/:id/sinh-vien-diem" element={<TeacherClassDetailPage />} />
 
-        {/* --- Thêm các route khác cho Sinh viên --- */}
-        {/* <Route path="sinh-vien/lich-hoc" element={<StudentSchedulePage />} /> */}
-        {/* <Route path="sinh-vien/ket-qua" element={<StudentGradesPage />} /> */}
-
-        {/* --- Thêm các route cho Giảng viên --- */}
-        {/* <Route path="giang-vien/lop-hoc" element={<TeacherClassListPage />} /> */}
-
-        {/* --- Thêm các route cho Admin --- */}
-        {/* <Route path="admin/duyet-don" element={<AdminApprovePage />} /> */}
-        {/* ... các route quản lý khác ... */}
+        {/* --- Route cho Admin --- */}
+        <Route path="admin/mon-hoc" element={<AdminMonHocCRUDPage />} />
+        <Route path="admin/lop-tin-chi" element={<AdminLopTinChiCRUDPage />} />
+        <Route path="admin/duyet-don" element={<AdminApprovePage />} />
 
         {/* Các route con khác sẽ render bên trong <Outlet /> của DashboardLayout */}
       </Route>
