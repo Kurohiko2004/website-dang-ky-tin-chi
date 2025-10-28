@@ -221,7 +221,6 @@ const layLichHoc = async (req, res) => {
         const { id: SinhVien_id } = req.user;
         const { kyHoc, namHoc } = req.query;
 
-        // --- ADDED: Basic validation for query parameters ---
         if (!kyHoc || !namHoc) {
             return res.status(400).json({ message: 'Vui lòng cung cấp thông tin kỳ học (kyHoc) và năm học (namHoc) trong query parameters.' });
         }
@@ -239,20 +238,23 @@ const layLichHoc = async (req, res) => {
             include: [
                 {
                     model: db.LopTinChi,
-                    // --- ADDED: Filter LopTinChi by semester and year ---
-                    where: {
-                        kyHoc: kyHoc,
-                        namHoc: namHoc
-                    },
-                    required: true, // Makes this an INNER JOIN - only return DangKyHoc if LopTinChi matches
-                    attributes: ['ngayHoc', 'kipHoc', 'phongHoc', 'toaNha'],
-                    include: {
-                        model: db.MonHoc,
-                        attributes: ['ten']
-                    }
+                    where: { kyHoc, namHoc },
+                    required: true,
+                    attributes: ['id', 'ngayHoc', 'kipHoc', 'phongHoc', 'toaNha'],
+                    include: [
+                        {
+                            model: db.MonHoc,
+                            attributes: ['ten']
+                        },
+                        {
+                            model: db.GiangVien,
+                            attributes: ['hoTen']
+                        }
+                    ]
                 }
             ]
         });
+
 
         res.status(200).json({
             message: `Lấy lịch học cho kỳ ${kyHoc}, năm học ${namHoc} thành công`, // Updated message
@@ -312,7 +314,60 @@ const xemDiem = async (req, res) => {
     }
 };
 
+const layDonDangKyHienTai = async (req, res) => {
+    try {
+        const { id: SinhVien_id } = req.user;
+        const { kyHoc, namHoc } = req.query;
 
+        if (!kyHoc || !namHoc) {
+            return res.status(400).json({ message: 'Vui lòng cung cấp kỳ học và năm học.' });
+        }
+
+        // Lấy TẤT CẢ các đơn đăng ký (cả chờ duyệt và đã duyệt)
+        const dangKyHienTai = await db.DangKyHoc.findAll({
+            where: {
+                SinhVien_id: SinhVien_id,
+                trangThai: ['Chờ duyệt', 'Đã duyệt'] // Quan trọng: lấy cả 2 trạng thái
+            },
+            include: [
+                {
+                    model: db.LopTinChi,
+                    where: {
+                        kyHoc: kyHoc,
+                        namHoc: namHoc
+                    },
+                    required: true, // Chỉ lấy các đơn đăng ký thuộc kỳ/năm học này
+                    include: {
+                        model: db.MonHoc,
+                        attributes: ['id', 'ten', 'soTinChi'] // Lấy thông tin môn học
+                    },
+                    attributes: ['id', 'ngayHoc', 'kipHoc'] // Lấy thông tin lớp
+                }
+            ],
+            attributes: ['id', 'trangThai'] // Thông tin từ đơn đăng ký
+        });
+
+        // Format lại dữ liệu cho frontend dễ sử dụng
+        const formattedData = dangKyHienTai.map(dk => ({
+            id: dk.LopTinChi.id, // ID của Lớp Tín Chỉ
+            classCode: dk.LopTinChi.id,
+            courseName: dk.LopTinChi.MonHoc.ten,
+            courseCode: dk.LopTinChi.MonHoc.id, // ID của Môn Học
+            credits: dk.LopTinChi.MonHoc.soTinChi,
+            schedule: dk.LopTinChi.ngayHoc,
+            shift: dk.LopTinChi.kipHoc,
+            trangThai: dk.trangThai // 'Đã duyệt' hoặc 'Chờ duyệt'
+        }));
+
+        res.status(200).json({
+            message: 'Lấy thông tin đăng ký hiện tại thành công',
+            data: formattedData
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
 
 
 module.exports = {
@@ -320,5 +375,6 @@ module.exports = {
     layCacLopDangMo,
     layLichHoc,
     xemDiem,
-    layThongTinCaNhan
+    layThongTinCaNhan,
+    layDonDangKyHienTai
 };

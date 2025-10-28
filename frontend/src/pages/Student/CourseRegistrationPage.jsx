@@ -1,5 +1,5 @@
 // src/pages/Student/DangKyHocPhanPage.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../../contexts/AuthContext'; // Import AuthContext
 import api from '../../lib/api'; // Import api utility
 import { BookOpen, User, Calendar, Clock, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react'; // Icons
@@ -28,57 +28,115 @@ function CourseRegistrationPage() {
     const { user, token } = useContext(AuthContext); // Lấy thông tin user và token
     const [availableCourses, setAvailableCourses] = useState([]); // Danh sách lớp lấy từ API
     const [selectedCourses, setSelectedCourses] = useState([]); // Danh sách lớp SV đã chọn
+    const [registeredCourses, setRegisteredCourses] = useState([]); // <-- STATE MỚI: Lớp đã đăng ký/chờ duyệt
     const [loading, setLoading] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false); // State loading riêng cho nút submit
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState(null); // { message, type }
 
-    const MAX_CREDITS = 15; // Giới hạn tín chỉ
+    const MAX_CREDITS = 15; // Giới hạn tín chỉ - hardcode
+
+    // --- TÁCH HÀM FETCH DATA ---
+    // Sử dụng useCallback để hàm này không bị tạo lại mỗi lần render
+    const fetchInitialData = useCallback(async () => {
+        if (!user || !token) return;
+
+        setLoading(true);
+        setError(null);
+        // hardcode
+        const currentKyHoc = 1;
+        const currentNamHoc = '2025-2026';
+
+        try {
+            // Gọi song song 2 API
+            const [availableRes, registeredRes] = await Promise.all([
+                api.get(`/sinh-vien/lop-tin-chi?kyHoc=${currentKyHoc}&namHoc=${currentNamHoc}`),
+                api.get(`/sinh-vien/dang-ky-hien-tai?kyHoc=${currentKyHoc}&namHoc=${currentNamHoc}`) // <-- get các đăng ký cũ
+            ]);
+
+            // 1. Xử lý danh sách lớp đang mở (như cũ)
+            const formattedCourses = availableRes.data.map(lop => (
+                // ... (logic format như cũ) ...
+                {
+                    id: lop.id,
+                    classCode: lop.id,
+                    courseName: lop.MonHoc?.ten || 'N/A',
+                    courseCode: lop.MonHoc?.id || 'N/A',
+                    teacher: lop.GiangVien?.hoTen || 'N/A',
+                    slots: lop.soSlotConLai,
+                    schedule: lop.ngayHoc || 'N/A',
+                    shift: lop.kipHoc || 'N/A',
+                    credits: lop.MonHoc?.soTinChi || 0
+                }
+            ));
+            setAvailableCourses(formattedCourses);
+
+            // 2. Lưu lại danh sách lớp đã đăng ký
+            setRegisteredCourses(registeredRes.data); // Dữ liệu đã được format từ backend
+
+        } catch (err) {
+            setError(err.message || 'Không thể tải dữ liệu đăng ký.');
+            showNotification(`Lỗi: ${err.message || 'Không thể tải dữ liệu.'}`, 'error');
+        } finally {
+            setLoading(false);
+        }
+    }, [user, token]); // Phụ thuộc vào user và token
+
+
+
+    // --- useEffect chỉ gọi hàm fetch ---
+    useEffect(() => {
+        fetchInitialData();
+    }, [fetchInitialData]); // Chỉ chạy lại khi hàm fetchInitialData thay đổi
+
+
+    // --- CẬP NHẬT TÍNH TOÁN TÍN CHỈ ---
+    const registeredCredits = registeredCourses.reduce((sum, course) => sum + course.credits, 0);
+    const selectedCredits = selectedCourses.reduce((sum, course) => sum + course.credits, 0);
+    const totalCredits = registeredCredits + selectedCredits; // <-- TỔNG TÍN CHỈ MỚI
 
     // --- Fetch danh sách lớp học phần khi component mount ---
-    useEffect(() => {
-        if (!user || !token) return; // Chỉ fetch khi đã có thông tin user
+    // useEffect(() => {
+    //     if (!user || !token) return; // Chỉ fetch khi đã có thông tin user
 
-        const fetchAvailableClasses = async () => {
-            setLoading(true);
-            setError(null);
-            // --- TODO: Xác định kyHoc, namHoc hiện tại ---
-            // hardcode
-            const currentKyHoc = 1;
-            const currentNamHoc = '2025-2026';
-            // ---------------------------------------------
-            try {
-                const response = await api.get(`/sinh-vien/lop-tin-chi?kyHoc=${currentKyHoc}&namHoc=${currentNamHoc}`);
+    //     const fetchAvailableClasses = async () => {
+    //         setLoading(true);
+    //         setError(null);
+    //         // --- TODO: Xác định kyHoc, namHoc hiện tại ---
+    //         // hardcode
+    //         const currentKyHoc = 1;
+    //         const currentNamHoc = '2025-2026';
+    //         // ---------------------------------------------
+    //         try {
+    //             const response = await api.get(`/sinh-vien/lop-tin-chi?kyHoc=${currentKyHoc}&namHoc=${currentNamHoc}`);
 
-                // Map lại dữ liệu API cho phù hợp với cấu trúc component mong đợi
-                const formattedCourses = response.data.map(lop => ({
-                    id: lop.id, // ID Lớp tín chỉ
-                    classCode: lop.id, // Dùng ID lớp làm classCode
-                    courseName: lop.MonHoc?.ten || 'N/A',
-                    courseCode: lop.MonHoc?.id || 'N/A', // Lấy ID môn học nếu có trong model MonHoc
-                    teacher: lop.GiangVien?.hoTen || 'N/A',
-                    slots: lop.soSlotConLai, // Sử dụng slot còn lại đã tính toán
-                    schedule: lop.ngayHoc || 'N/A',
-                    shift: lop.kipHoc || 'N/A', // Đảm bảo cột kipHoc tồn tại
-                    credits: lop.MonHoc?.soTinChi || 0 // Số tín chỉ từ MonHoc
-                }));
+    //             // Map lại dữ liệu API cho phù hợp với cấu trúc component mong đợi
+    //             const formattedCourses = response.data.map(lop => ({
+    //                 id: lop.id, // ID Lớp tín chỉ
+    //                 classCode: lop.id, // Dùng ID lớp làm classCode
+    //                 courseName: lop.MonHoc?.ten || 'N/A',
+    //                 courseCode: lop.MonHoc?.id || 'N/A', // Lấy ID môn học nếu có trong model MonHoc
+    //                 teacher: lop.GiangVien?.hoTen || 'N/A',
+    //                 slots: lop.soSlotConLai, // Sử dụng slot còn lại đã tính toán
+    //                 schedule: lop.ngayHoc || 'N/A',
+    //                 shift: lop.kipHoc || 'N/A', // Đảm bảo cột kipHoc tồn tại
+    //                 credits: lop.MonHoc?.soTinChi || 0 // Số tín chỉ từ MonHoc
+    //             }));
 
-                console.log("Formatted Courses:", formattedCourses);
+    //             console.log("Formatted Courses:", formattedCourses);
 
-                setAvailableCourses(formattedCourses);
-            } catch (err) {
-                setError(err.message || 'Không thể tải danh sách lớp tín chỉ.');
-                showNotification(`Lỗi: ${err.message || 'Không thể tải danh sách lớp tín chỉ.'}`, 'error');
-            } finally {
-                setLoading(false);
-            }
-        };
+    //             setAvailableCourses(formattedCourses);
+    //         } catch (err) {
+    //             setError(err.message || 'Không thể tải danh sách lớp tín chỉ.');
+    //             showNotification(`Lỗi: ${err.message || 'Không thể tải danh sách lớp tín chỉ.'}`, 'error');
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
 
-        fetchAvailableClasses();
-    }, [user, token]); // Dependency là user và token
+    //     fetchAvailableClasses();
+    // }, [user, token]); // Dependency là user và token
 
-    // Tính tổng tín chỉ đã chọn
-    const totalCredits = selectedCourses.reduce((sum, course) => sum + course.credits, 0);
 
     // Hiển thị thông báo
     const showNotification = (message, type) => {
@@ -92,52 +150,54 @@ function CourseRegistrationPage() {
         console.log("Selecting course:", course); // Log lớp đang định chọn
         console.log("Currently selected:", selectedCourses); // Log các lớp đã chọn
 
-        // Kiểm tra logic như trong code gốc
+        // --- Danh sách TẤT CẢ các lớp đã cam kết (đã đăng ký + đang chọn) ---
+        const allCommittedCourses = [...registeredCourses, ...selectedCourses];
+
+        // 1. Kiểm tra slot
         if (course.slots === 0) {
             console.log("DEBUG: Check failed - Slots = 0"); // <-- LOG REASON
             showNotification('Lớp này đã hết slot!', 'error');
             return;
         }
-        const alreadySelectedById = selectedCourses.find(c => c.id === course.id);
-        if (alreadySelectedById) {
-            console.log("DEBUG: Check failed - Already selected by ID:", alreadySelectedById); // <-- LOG REASON
+
+        // 2. Kiểm tra đã đăng ký (từ server)
+        // (Không cần kiểm tra ID vì nút sẽ bị vô hiệu hóa)
+
+        // 3. Kiểm tra đã chọn (trong giỏ hàng)
+        if (selectedCourses.find(c => c.id === course.id)) {
             showNotification('Bạn đã chọn lớp này rồi!', 'warning');
             return;
         }
-        // Kiểm tra trùng môn học (courseCode)
-        const alreadySelectedByCode = selectedCourses.find(c => c.courseCode === course.courseCode);
-        if (alreadySelectedByCode) {
-            console.log("DEBUG: Check failed - Duplicate course code found:", alreadySelectedByCode, "Comparing with:", course.courseCode); // <-- LOG REASON & VALUES
-            showNotification(`Bạn đã chọn một lớp khác của môn học ${course.courseName} rồi!`, 'warning');
+
+        // 4. Kiểm tra trùng MÔN HỌC (courseCode)
+        // SỬ DỤNG allCommittedCourses
+        if (allCommittedCourses.find(c => c.courseCode === course.courseCode)) {
+            showNotification(`Bạn đã đăng ký hoặc đã chọn một lớp khác của môn ${course.courseName} rồi!`, 'warning');
             return;
         }
 
+        // 5. Kiểm tra tổng tín chỉ (SỬ DỤNG totalCredits MỚI)
         const newTotalCredits = totalCredits + course.credits;
-        console.log("DEBUG: Checking credits - New total:", newTotalCredits, "Max:", MAX_CREDITS); // <-- LOG CREDIT CHECK
         if (newTotalCredits > MAX_CREDITS) {
-            console.log("DEBUG: Check failed - Exceeds max credits"); // <-- LOG REASON
             showNotification(`Không thể đăng ký! Tổng số tín chỉ sẽ vượt quá ${MAX_CREDITS} (${newTotalCredits}/${MAX_CREDITS})`, 'error');
             return;
         }
 
-        // Kiểm tra trùng lịch học
+        // 6. Kiểm tra trùng lịch
         const newSlot = `${course.schedule}_${course.shift}`;
-        console.log("DEBUG: Checking schedule conflict for slot:", newSlot); // <-- LOG SLOT BEING CHECKED
         if (course.schedule && course.shift) {
-            const conflict = selectedCourses.some(selected => {
+            // SỬ DỤNG allCommittedCourses
+            const conflict = allCommittedCourses.some(selected => {
                 const selectedSlot = selected.schedule && selected.shift && `${selected.schedule}_${selected.shift}`;
                 return selectedSlot === newSlot;
-            }
-            );
+            });
             if (conflict) {
-                console.log("DEBUG: Check failed - Schedule conflict detected"); // <-- LOG REASON
-                showNotification(`Lịch học của lớp ${course.classCode} bị trùng với một lớp bạn đã chọn!`, 'error');
+                showNotification(`Lịch học của lớp ${course.classCode} bị trùng với một lớp bạn đã đăng ký/đã chọn!`, 'error');
                 return;
             }
         }
 
-        // Nếu tất cả các kiểm tra đều qua:
-        console.log("DEBUG: All checks passed. Adding course to selection."); // <-- LOG SUCCESS BEFORE ADDING
+        // 7. Thêm vào giỏ hàng
         setSelectedCourses([...selectedCourses, course]);
         showNotification(`Đã thêm ${course.courseName} vào danh sách đăng ký`, 'success');
     };
@@ -147,6 +207,8 @@ function CourseRegistrationPage() {
         setSelectedCourses(selectedCourses.filter(c => c.id !== courseId));
         showNotification('Đã xóa môn học khỏi danh sách', 'info'); // Dùng type 'info' hoặc 'success'
     };
+
+
 
     // Xử lý khi nhấn nút Xác nhận phiếu đăng ký
     const handleConfirmRegistration = async () => {
@@ -169,9 +231,13 @@ function CourseRegistrationPage() {
             // Gọi API backend
             await api.post('/sinh-vien/dang-ky', { danhSachLopIds: selectedLopIds });
             showNotification('Gửi yêu cầu đăng ký thành công!', 'success');
-            setSelectedCourses([]); // Xóa danh sách đã chọn sau khi gửi thành công
-            // (Tùy chọn) Có thể fetch lại danh sách lớp để cập nhật slot
-            // fetchAvailableClasses();
+
+            // 1. Xóa danh sách đã chọn sau khi gửi thành công
+            setSelectedCourses([]);
+
+            // 2. Tải lại dữ liệu từ backend để cập nhật trạng thái đăng ký
+            await fetchInitialData();
+
         } catch (err) {
             console.error('Registration failed:', err);
             // Hiển thị lỗi từ backend (ví dụ: hết slot, trùng lịch server-side, đã đăng ký...)
@@ -183,8 +249,6 @@ function CourseRegistrationPage() {
     };
 
     if (loading) return <div className="p-6 text-center">Đang tải danh sách lớp học phần...</div>;
-    // Bỏ qua hiển thị lỗi ở đây vì đã có Notification
-    // if (error) return <div className="p-6 text-center text-red-500">Lỗi: {error}</div>;
 
     return (
         <div className="space-y-6">
@@ -203,20 +267,31 @@ function CourseRegistrationPage() {
                 </div>
             )}
 
-            {/* Credit Summary - Phần tổng quan tín chỉ */}
+            {/* Credit Summary - Phần tổng quan tín chỉ (ĐÃ CẬP NHẬT) */}
             <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="font-semibold text-gray-700 mb-2">Tổng quan</h3>
                 <div className="space-y-2 text-sm">
+                    {/* --- CẬP NHẬT NỘI DUNG --- */}
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Tín chỉ đã chọn:</span>
-                        <span className={`font-bold ${totalCredits > MAX_CREDITS ? 'text-red-600' : 'text-blue-600'}`}>
-                            {totalCredits}/{MAX_CREDITS}
+                        <span className="text-gray-600">Tín chỉ đã đăng ký/chờ duyệt:</span>
+                        <span className="font-bold text-green-600">
+                            {registeredCredits}
                         </span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Môn đã chọn:</span>
-                        <span className="font-bold text-blue-600">{selectedCourses.length}</span>
+                        <span className="text-gray-600">Tín chỉ đang chọn (giỏ hàng):</span>
+                        <span className="font-bold text-blue-600">
+                            {selectedCredits}
+                        </span>
                     </div>
+                    <hr className="my-1" />
+                    <div className="flex justify-between font-bold">
+                        <span className="text-gray-600">Tổng cộng:</span>
+                        <span className={`font-bold ${totalCredits > MAX_CREDITS ? 'text-red-600' : 'text-gray-800'}`}>
+                            {totalCredits}/{MAX_CREDITS}
+                        </span>
+                    </div>
+                    {/* --- KẾT THÚC CẬP NHẬT --- */}
                 </div>
                 <div className="mt-3 bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div
@@ -249,9 +324,13 @@ function CourseRegistrationPage() {
                         <tbody className="divide-y divide-gray-200">
                             {availableCourses.map(course => {
                                 const isSelected = selectedCourses.some(c => c.id === course.id);
-                                const isDisabled = course.slots === 0 || isSelected;
+                                // Bổ sung kiểm tra đã đăng ký
+                                const registeredInfo = registeredCourses.find(c => c.id === course.id);
+                                // Cập nhật logic vô hiệu hóa
+                                const isDisabled = course.slots === 0 || isSelected || registeredInfo;
+
                                 return (
-                                    <tr key={course.id} className={`${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                                    <tr key={course.id} className={`${isSelected ? 'bg-blue-50' : (registeredInfo ? 'bg-green-50' : 'hover:bg-gray-50')}`}>
                                         <td className="px-4 py-3 text-sm font-medium text-gray-900">{course.classCode}</td>
                                         <td className="px-4 py-3 text-sm text-gray-900">{course.courseName}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{course.courseCode}</td>
@@ -260,7 +339,6 @@ function CourseRegistrationPage() {
                                             {course.teacher}
                                         </td>
                                         <td className="px-4 py-3 text-sm">
-                                            {/* Hiển thị slot */}
                                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${course.slots === 0 ? 'bg-red-100 text-red-700' :
                                                 course.slots < 5 ? 'bg-yellow-100 text-yellow-700' :
                                                     'bg-green-100 text-green-700'
@@ -283,16 +361,24 @@ function CourseRegistrationPage() {
                                         </td>
                                         <td className="px-4 py-3 text-sm font-medium text-gray-900">{course.credits}</td>
                                         <td className="px-4 py-3">
-                                            {/* Nút Chọn/Đã chọn */}
+                                            {/* --- CẬP NHẬT LOGIC NÚT BẤM --- */}
                                             <button
                                                 onClick={() => handleSelectCourse(course)}
                                                 disabled={isDisabled}
-                                                className={`px-3 py-1 text-sm font-medium text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSelected ? 'bg-gray-400 cursor-not-allowed' :
-                                                    course.slots === 0 ? 'bg-red-400 cursor-not-allowed' :
-                                                        'bg-blue-600 hover:bg-blue-700'
-                                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                className={`px-3 py-1 text-sm font-medium text-white rounded focus:outline-none 
+                                                    ${isSelected ? 'bg-gray-400 cursor-not-allowed' :
+                                                        (registeredInfo?.trangThai === 'Đã duyệt' ? 'bg-green-600 cursor-not-allowed' :
+                                                            (registeredInfo?.trangThai === 'Chờ duyệt' ? 'bg-yellow-500 cursor-not-allowed' :
+                                                                (course.slots === 0 ? 'bg-red-400 cursor-not-allowed' :
+                                                                    'bg-blue-600 hover:bg-blue-700'
+                                                                )))} 
+                                                    disabled:opacity-70 disabled:cursor-not-allowed`}
                                             >
-                                                {isSelected ? 'Đã chọn' : (course.slots === 0 ? 'Hết chỗ' : 'Chọn')}
+                                                {isSelected ? 'Đã chọn' :
+                                                    (registeredInfo?.trangThai === 'Đã duyệt' ? 'Đã duyệt' :
+                                                        (registeredInfo?.trangThai === 'Chờ duyệt' ? 'Chờ duyệt' :
+                                                            (course.slots === 0 ? 'Hết chỗ' : 'Chọn')))
+                                                }
                                             </button>
                                         </td>
                                     </tr>
@@ -323,14 +409,17 @@ function CourseRegistrationPage() {
                             {selectedCourses.map(course => (
                                 <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                                     <div className="flex-1">
-                                        <div className="font-semibold text-gray-900">{course.courseName} <span className="text-sm font-normal text-gray-500">({course.classCode})</span></div>
+                                        <div className="font-semibold text-gray-900">{course.courseName}
+                                            <span className="text-sm font-normal text-gray-500">({course.classCode})</span>
+                                        </div>
                                         <div className="text-sm text-gray-600 mt-1">
                                             {course.teacher} | {course.schedule} ({course.shift}) | {course.credits} TC
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => handleRemoveCourse(course.id)}
-                                        className="ml-4 px-3 py-1 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        className="ml-4 px-3 py-1 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none 
+                                        focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                         aria-label={`Xóa lớp ${course.courseName}`}
                                     >
                                         Xóa
@@ -342,10 +431,11 @@ function CourseRegistrationPage() {
                         {/* Submit Button Area */}
                         <div className="mt-6 flex items-center justify-between p-4 bg-gray-100 rounded-lg">
                             <div>
-                                <div className="text-sm text-gray-600">Tổng số tín chỉ:</div>
+                                <div className="text-sm text-gray-600">Tổng số tín chỉ (trong giỏ hàng):</div>
                                 <div className={`text-2xl font-bold ${totalCredits > MAX_CREDITS ? 'text-red-600' : 'text-blue-600'}`}>
-                                    {totalCredits} / {MAX_CREDITS}
+                                    {selectedCredits}
                                 </div>
+                                <div className="text-sm text-gray-500 mt-1">Tổng cộng đã đăng ký: {totalCredits} / {MAX_CREDITS}</div>
                                 {totalCredits > MAX_CREDITS && (
                                     <p className="text-xs text-red-600 mt-1">Tổng tín chỉ vượt quá giới hạn!</p>
                                 )}

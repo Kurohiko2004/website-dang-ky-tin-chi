@@ -303,6 +303,26 @@ const validateLopTinChiInput = async (data, isUpdate = false) => {
 };
 
 
+// 📌 Hàm helper: thêm trường soLuongDaDangKy vào danh sách hoặc bản ghi đơn lẻ
+const themSoLuongDaDangKy = (lopTinChi) => {
+    if (Array.isArray(lopTinChi)) {
+        // Nếu là mảng lớp tín chỉ
+        return lopTinChi.map(lop => ({
+            ...lop.toJSON(),
+            soLuongDaDangKy: lop.DangKyHocs ? lop.DangKyHocs.length : 0
+        }));
+    } else if (lopTinChi) {
+        // Nếu là 1 đối tượng đơn lẻ
+        const json = lopTinChi.toJSON();
+        return {
+            ...json,
+            soLuongDaDangKy: lopTinChi.DangKyHocs ? lopTinChi.DangKyHocs.length : 0
+        };
+    }
+    return lopTinChi;
+};
+
+
 const taoLopTinChi = async (req, res) => {
     try {
         // Gọi hàm validate
@@ -313,12 +333,23 @@ const taoLopTinChi = async (req, res) => {
         }
 
         // Nếu không có lỗi, tiến hành tạo mới
-        const { id, kyHoc, namHoc, ngayHoc, phongHoc, toaNha, soLuongToiDa, MonHoc_id, GiangVien_id } = req.body;
+        const { id, kyHoc, namHoc, kipHoc, ngayHoc, phongHoc, toaNha, soLuongToiDa, MonHoc_id, GiangVien_id } = req.body;
         const lopMoi = await db.LopTinChi.create({
-            id, kyHoc, namHoc, ngayHoc, phongHoc, toaNha, soLuongToiDa, MonHoc_id, GiangVien_id
+            id, kyHoc, namHoc, kipHoc, ngayHoc, phongHoc, toaNha, soLuongToiDa, MonHoc_id, GiangVien_id
         });
 
-        res.status(201).json({ message: 'Tạo lớp tín chỉ thành công!', data: lopMoi });
+        // truy vấn lại vào csdl để lấy bản ghi mới tạo, gửi về cho frontend để hiển thị đủ thông tin
+        const lopMoiDayDu = await db.LopTinChi.findByPk(lopMoi.id, {
+            include: [
+                db.MonHoc,
+                db.GiangVien,
+                db.DangKyHoc
+            ]
+        });
+
+        const lopMoiCoSoLuong = themSoLuongDaDangKy(lopMoiDayDu);
+        res.status(201).json({ message: 'Tạo lớp tín chỉ thành công!', data: lopMoiCoSoLuong });
+
     } catch (error) {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
@@ -342,7 +373,13 @@ const capNhatLopTinChi = async (req, res) => {
         // (Chỉ cập nhật những trường có trong req.body)
         await lopTinChi.update(req.body);
 
-        res.status(200).json({ message: 'Cập nhật lớp tín chỉ thành công!', data: lopTinChi });
+        const lopTinChiUpdated = await db.LopTinChi.findByPk(id, {
+            include: [db.MonHoc, db.GiangVien],
+        });
+
+        const lopTinChiCoSoLuong = themSoLuongDaDangKy(lopTinChiUpdated);
+
+        res.status(200).json({ message: 'Cập nhật lớp tín chỉ thành công!', data: lopTinChiCoSoLuong });
     } catch (error) {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
@@ -352,12 +389,16 @@ const layTatCaLopTinChi = async (req, res) => {
     try {
         const danhSachLop = await db.LopTinChi.findAll({
             include: [
-                { model: db.MonHoc, attributes: ['ten'] },
-                { model: db.GiangVien, attributes: ['hoTen'] }
+                { model: db.MonHoc },
+                { model: db.GiangVien },
+                { model: db.DangKyHoc } // Thêm dòng này để lấy danh sách đăng ký
             ],
-            attributes: { exclude: ['MonHoc_id', 'GiangVien_id'] } // Loại bỏ ID thừa
         });
-        res.status(200).json({ message: 'Lấy danh sách lớp tín chỉ thành công!', data: danhSachLop });
+
+        // Thêm trường đếm số lượng sinh viên đã đăng ký
+        const danhSachLopCoSoLuong = themSoLuongDaDangKy(danhSachLop);
+        res.status(200).json({ message: 'Lấy danh sách lớp tín chỉ thành công!', data: danhSachLopCoSoLuong });
+
     } catch (error) {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
@@ -368,10 +409,9 @@ const layLopTinChiTheoId = async (req, res) => {
         const { id: LopTinChi_id } = req.params;
         const lopTinChi = await db.LopTinChi.findByPk(LopTinChi_id, {
             include: [ // Lấy kèm thông tin môn học và giảng viên
-                { model: db.MonHoc, attributes: ['ten', 'soTinChi'] },
-                { model: db.GiangVien, attributes: ['hoTen'] }
-            ],
-            attributes: { exclude: ['MonHoc_id', 'GiangVien_id'] }
+                { model: db.MonHoc },
+                { model: db.GiangVien }
+            ]
         });
 
         if (!lopTinChi) {

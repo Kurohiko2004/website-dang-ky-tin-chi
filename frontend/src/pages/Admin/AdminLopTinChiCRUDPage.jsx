@@ -97,8 +97,8 @@ function AdminLopTinChiCRUDPage() {
                 phongHoc: cls.phongHoc || '',
                 toaNha: cls.toaNha || '',
                 soLuongToiDa: cls.soLuongToiDa || '',
-                MonHoc_id: cls.MonHoc?.id || '', // Lấy ID môn học từ object include
-                GiangVien_id: cls.GiangVien?.id || '' // Lấy ID giảng viên từ object include
+                MonHoc_id: cls.MonHoc?.id || cls.MonHoc_id || '',
+                GiangVien_id: cls.GiangVien?.id || cls.GiangVien_id || ''
             });
         }
         setIsModalOpen(true);
@@ -181,10 +181,11 @@ function AdminLopTinChiCRUDPage() {
         }
     };
 
+
+
     // --- Render ---
     if (loading) return <div className="p-6 text-center">Đang tải dữ liệu...</div>;
-    // Bỏ qua hiển thị lỗi chính, dùng Notification
-    // if (error && !notification) return <div className="p-6 text-center text-red-500">Lỗi: {error}</div>;
+
 
     return (
         <div className="space-y-6">
@@ -241,6 +242,10 @@ function AdminLopTinChiCRUDPage() {
                         ? { text: 'Hết slot', color: 'bg-red-100 text-red-700' }
                         : { text: `Đã ĐK: ${enrolledCount}`, color: 'bg-green-100 text-green-700' };
 
+
+                    console.log('cls.kipHoc:', cls.kipHoc);
+
+
                     return (
                         <div key={cls.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                             <div className="p-4">
@@ -249,6 +254,7 @@ function AdminLopTinChiCRUDPage() {
                                         <h3 className="font-semibold text-base text-blue-700">{cls.id}</h3>
                                         <p className="font-medium text-gray-800 text-sm">{cls.MonHoc?.ten || 'N/A'}</p>
                                         <p className="text-xs text-gray-500">Mã môn: {cls.MonHoc?.id || 'N/A'}</p>
+
                                     </div>
                                     <div className="flex gap-1 flex-shrink-0">
                                         <button
@@ -279,7 +285,15 @@ function AdminLopTinChiCRUDPage() {
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Clock size={12} className="text-gray-400 flex-shrink-0" />
-                                        <span>{cls.kipHoc || 'N/A'}</span>
+                                        <span>
+                                            {cls.kipHoc
+                                                ? cls.kipHoc
+                                                    .split('-')           // tách "7-9" → ["7", "9"]
+                                                    .map((h) => `${h}h`)  // thêm chữ "h" → ["7h", "9h"]
+                                                    .join('-')            // nối lại → "7h-9h"
+                                                : 'N/A'}
+                                        </span>
+
                                     </div>
                                 </div>
                             </div>
@@ -326,7 +340,7 @@ function AdminLopTinChiCRUDPage() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Môn Học <span className="text-red-500">*</span></label>
-                                    <select name="MonHoc_id" value={editForm.MonHoc_id} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" disabled={!isAddMode}>
+                                    <select name="MonHoc_id" value={editForm.MonHoc_id} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
                                         <option value="">-- Chọn Môn Học --</option>
                                         {monHocList.map(mh => <option key={mh.id} value={mh.id}>{mh.ten} ({mh.id})</option>)}
                                     </select>

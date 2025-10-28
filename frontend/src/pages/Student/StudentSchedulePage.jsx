@@ -1,39 +1,9 @@
 // src/pages/Student/StudentSchedulePage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
-import api from '../../lib/api';
 import { Calendar } from 'lucide-react'; // Removed Printer for now
-
-// Helper function to transform API data into the schedule grid format
-const transformScheduleData = (apiData) => {
-    const schedule = {
-        'Thứ 2': [], 'Thứ 3': [], 'Thứ 4': [], 'Thứ 5': [], 'Thứ 6': [], 'Thứ 7': [], 'Chủ Nhật': []
-    };
-    if (!Array.isArray(apiData)) return schedule; // Return empty if no data
-
-    apiData.forEach(dangKy => {
-        const lop = dangKy.LopTinChi; // Access nested LopTinChi data
-
-        console.log(">>> LopTinChi ngayHoc, kipHoc:", lop?.ngayHoc, lop?.kipHoc);
-
-        if (lop && lop.ngayHoc && lop.kipHoc && Object.prototype.hasOwnProperty.call(schedule, lop.ngayHoc)
-        ) {
-            schedule[lop.ngayHoc].push({
-                // Extract relevant details for display
-                id: dangKy.id, // Keep DangKyHoc ID if needed
-                subject: lop.MonHoc?.ten ? `${lop.MonHoc.ten} (${lop.id})` : lop.id, // Show name and class ID
-                // group: 'N/A', // API doesn't seem to provide group number
-                room: `${lop.phongHoc || ''} - ${lop.toaNha || ''}`,
-                lecturer: lop.GiangVien?.hoTen || 'N/A', // Assuming GiangVien is included
-                shift: lop.kipHoc // Use the kipHoc string
-            });
-        }
-    });
-
-
-
-    return schedule;
-};
+import api from '../../lib/api';
+import { transformScheduleData } from '../../utils/scheduleUtils';
 
 function StudentSchedulePage() {
     const { user, token } = useContext(AuthContext);
@@ -93,7 +63,7 @@ function StudentSchedulePage() {
     // Define unique shifts/kips based on *your actual data* or requirements
     // This example uses the kips from your API data structure for simplicity
     const shifts = [
-        { id: '7h-9h00', time: '07:00' },
+        { id: '7h00-9h00', time: '07:00' },
         { id: '9h00-11h00', time: '09:00' },
         { id: '13h00-15h00', time: '13:00' },
         { id: '15h00-17h00', time: '15:00' },
@@ -167,28 +137,32 @@ function StudentSchedulePage() {
                         </thead>
                         <tbody>
                             {shifts.map(shift => (
-                                <tr key={shift.id} className="h-24">
+                                <tr key={shift.id} className="h-[120px] align-top">
                                     {/* Shift/Time Column */}
-                                    <td className="bg-gray-100 p-2 border border-gray-300 text-center font-semibold align-top">
+                                    <td className="bg-gray-100 p-2 border border-gray-300 text-center font-semibold align-top w-[120px]">
                                         <div>Kíp {shift.id}</div>
                                         <div className="text-sm text-gray-600">{shift.time}</div>
                                     </td>
+
                                     {/* Day Columns */}
                                     {days.map(day => {
                                         const classes = getClassesForSlot(day, shift.id);
                                         return (
-                                            <td key={`${day}-${shift.id}`} className="border border-gray-300 p-1 align-top relative">
+                                            <td
+                                                key={`${day}-${shift.id}`}
+                                                className="border border-gray-300 p-1 align-top relative min-h-[120px] text-sm"
+                                            >
                                                 {classes.map((cls, idx) => (
                                                     <div
                                                         key={idx}
-                                                        className="bg-blue-50 border border-blue-200 rounded p-1.5 mb-1 last:mb-0 text-xs shadow-sm" // Smaller text
+                                                        className="bg-blue-50 border border-blue-200 rounded p-1.5 mb-1 last:mb-0 text-xs shadow-sm break-words"
+                                                        style={{ overflowWrap: 'break-word' }}
                                                     >
                                                         <div className="font-semibold text-blue-800 mb-0.5 break-words">
                                                             {cls.subject}
                                                         </div>
-                                                        {/* <div className="text-gray-600">Nhóm: {cls.group}</div> */}
                                                         <div className="text-gray-600">Phòng: {cls.room}</div>
-                                                        {/* <div className="text-gray-600">GV: {cls.lecturer}</div> */}
+                                                        <div className="text-gray-600 italic">GV: {cls.teacher}</div>
                                                     </div>
                                                 ))}
                                             </td>
@@ -197,6 +171,8 @@ function StudentSchedulePage() {
                                 </tr>
                             ))}
                         </tbody>
+
+
                     </table>
                 </div>
             )}
