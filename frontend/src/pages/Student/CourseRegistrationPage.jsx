@@ -34,7 +34,7 @@ function CourseRegistrationPage() {
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState(null); // { message, type }
 
-    const MAX_CREDITS = 15; // Giới hạn tín chỉ - hardcode
+    const MAX_CREDITS = 16; // Giới hạn tín chỉ - hardcode
 
     // --- TÁCH HÀM FETCH DATA ---
     // Sử dụng useCallback để hàm này không bị tạo lại mỗi lần render

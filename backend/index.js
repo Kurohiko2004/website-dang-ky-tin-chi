@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Vite dev server
+    origin: 'http://localhost:5173',
     credentials: true
 }));
 
@@ -24,20 +24,17 @@ app.use('/admin', adminRoutes);
 app.use('/sinh-vien', sinhVienRoutes);
 app.use('/giang-vien', giangVienRoutes);
 
-// định nghĩa một route lắng nghe các GET request trên root URL(/)
-// khi client gửi request GET dến root URL (http://localhost:3000/),
-// callback function trong app.get được kích hoạt - hàm res.send()
 app.get('/', (req, res) => {
     res.send('Welcome to the REST API');
 })
 
 // Khởi động server
 app.listen(PORT, async () => {
-    console.log(`🚀 Server đang chạy trên cổng ${PORT}`);
+    console.log(` Server đang chạy trên cổng ${PORT}`);
     try {
-        await db.sequelize.authenticate();  // kết nối csdl
-        console.log('✅ Kết nối CSDL thành công.');
+        await db.sequelize.authenticate();
+        console.log(' Kết nối CSDL thành công.');
     } catch (error) {
-        console.error('❌ Không thể kết nối tới CSDL:', error);
+        console.error(' Không thể kết nối tới CSDL:', error);
     }
 });

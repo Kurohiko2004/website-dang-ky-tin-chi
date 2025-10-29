@@ -225,13 +225,11 @@ const layLichHoc = async (req, res) => {
             return res.status(400).json({ message: 'Vui lòng cung cấp thông tin kỳ học (kyHoc) và năm học (namHoc) trong query parameters.' });
         }
 
-        // --- UPDATED: Build the where clause dynamically ---
         const whereClause = {
             SinhVien_id: SinhVien_id,
             trangThai: 'Đã duyệt'
         };
 
-        // Find the associated LopTinChi records matching the semester and year
         const lichHoc = await db.DangKyHoc.findAll({
             where: whereClause,
             attributes: ['id'],
@@ -298,7 +296,7 @@ const xemDiem = async (req, res) => {
                     attributes: ['kyHoc', 'namHoc'],
                     include: {
                         model: db.MonHoc,
-                        attributes: ['ten', 'soTinChi'] // Lấy tên môn và số tín chỉ
+                        attributes: ['ten', 'soTinChi']
                     }
                 }
             }
@@ -327,7 +325,7 @@ const layDonDangKyHienTai = async (req, res) => {
         const dangKyHienTai = await db.DangKyHoc.findAll({
             where: {
                 SinhVien_id: SinhVien_id,
-                trangThai: ['Chờ duyệt', 'Đã duyệt'] // Quan trọng: lấy cả 2 trạng thái
+                trangThai: ['Chờ duyệt', 'Đã duyệt']
             },
             include: [
                 {
@@ -339,24 +337,24 @@ const layDonDangKyHienTai = async (req, res) => {
                     required: true, // Chỉ lấy các đơn đăng ký thuộc kỳ/năm học này
                     include: {
                         model: db.MonHoc,
-                        attributes: ['id', 'ten', 'soTinChi'] // Lấy thông tin môn học
+                        attributes: ['id', 'ten', 'soTinChi']
                     },
-                    attributes: ['id', 'ngayHoc', 'kipHoc'] // Lấy thông tin lớp
+                    attributes: ['id', 'ngayHoc', 'kipHoc']
                 }
             ],
-            attributes: ['id', 'trangThai'] // Thông tin từ đơn đăng ký
+            attributes: ['id', 'trangThai']
         });
 
         // Format lại dữ liệu cho frontend dễ sử dụng
         const formattedData = dangKyHienTai.map(dk => ({
-            id: dk.LopTinChi.id, // ID của Lớp Tín Chỉ
+            id: dk.LopTinChi.id,
             classCode: dk.LopTinChi.id,
             courseName: dk.LopTinChi.MonHoc.ten,
-            courseCode: dk.LopTinChi.MonHoc.id, // ID của Môn Học
+            courseCode: dk.LopTinChi.MonHoc.id,
             credits: dk.LopTinChi.MonHoc.soTinChi,
             schedule: dk.LopTinChi.ngayHoc,
             shift: dk.LopTinChi.kipHoc,
-            trangThai: dk.trangThai // 'Đã duyệt' hoặc 'Chờ duyệt'
+            trangThai: dk.trangThai
         }));
 
         res.status(200).json({
