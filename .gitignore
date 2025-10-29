@@ -12,4 +12,4 @@ yarn-error.log*
 *.log
 .env.local
 .env.*.local
-hashPassword.js
+
