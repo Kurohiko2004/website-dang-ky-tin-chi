@@ -258,10 +258,51 @@ const nhapKetQua = async (req, res) => {
     }
 };
 
+const layLichDay = async (req, res) => {
+    try {
+        // 1. lấy thông tin và ktra thông tin
+        const { id: GiangVien_id } = req.user;
+        const { kyHoc, namHoc } = req.query;
+
+        if (!kyHoc || !namHoc) {
+            return res.status(400).json({ message: 'Vui lòng cung cấp kyHoc và namHoc trong query parameters.' });
+        }
+
+        // 2. truy vấn csdl: tìm trong bảng loptinchi có trùng GiangVien_id, rồi join với monhoc để
+        // lấy mã môn và tên môn
+        const lichDay = await db.LopTinChi.findAll({
+            where: {
+                GiangVien_id: GiangVien_id,
+                kyHoc: kyHoc,
+                namHoc: namHoc
+            },
+            attributes: {
+                exclude: ['soLuongToiDa', 'GiangVien_id']
+            },
+            include: [
+                {
+                    model: db.MonHoc,
+                    attributes: ['id', 'ten']
+                }
+            ]
+        });
+
+        res.status(200).json({
+            message: `Lấy lịch dạy cho kỳ ${kyHoc} và năm học ${namHoc} thành công`,
+            data: lichDay
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: 'Lỗi server',
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     layThongTinCaNhan,
     layLopCuaGiangVien,
     layDSSinhVienVaDiem,
-    nhapKetQua
+    nhapKetQua,
+    layLichDay
 };

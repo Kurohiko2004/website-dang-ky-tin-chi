@@ -7,5 +7,6 @@ router.get('/thong-tin', authenticateToken, isGiangVien, giangVienController.lay
 router.get('/lop-hoc-cua-toi', authenticateToken, isGiangVien, giangVienController.layLopCuaGiangVien);
 router.get('/lop-hoc-chi-tiet/:id', authenticateToken, isGiangVien, giangVienController.layDSSinhVienVaDiem);
 router.post('/lop/:id/nhap-ket-qua', authenticateToken, isGiangVien, giangVienController.nhapKetQua);
+router.get('/lich-day', authenticateToken, isGiangVien, giangVienController.layLichDay);
 
 module.exports = router;
