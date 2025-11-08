@@ -1,6 +1,6 @@
 const db = require('../models');
 const sequelize = require('../config/database');
-const isRegistrationOpen = require('../utils/timeCheck');
+const { isRegistrationOpen }= require('../utils/timeCheck');
 
 const layThongTinCaNhan = async (req, res) => {
     try {
@@ -196,7 +196,7 @@ const taoDonDangKy = async (req, res) => {
     const { id: SinhVien_id } = req.user;
     const { danhSachLopIds } = req.body;
 
-    if (!isRegistrationOpen) {
+    if (!isRegistrationOpen()) {
         return res.status(403).json(
             { message: 'Đã hết thời hạn đăng ký môn học!' }
         );
@@ -344,7 +344,7 @@ const xoaDonDangKy = async (req, res) => {
         const { id: SinhVien_id } = req.user;
         const { id: dangkyhoc_id } = req.params;
 
-        if (!isRegistrationOpen) {
+        if (!isRegistrationOpen()) {
             return res.status(403).json(
                 { message: 'Không thể xóa do đã ngoài thời gian đăng ký môn học!' }
             );
@@ -443,6 +443,16 @@ const layDonDangKyHienTai = async (req, res) => {
     }
 };
 
+const kiemTraThoiGianDangKy = async (req, res) => {
+    try {
+        const isOpen = isRegistrationOpen();
+        res.status(200).json(
+            { isRegistrationOpen: isOpen }
+        );
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
 
 module.exports = {
     taoDonDangKy,
@@ -451,5 +461,6 @@ module.exports = {
     xemDiem,
     layThongTinCaNhan,
     layDonDangKyHienTai,
-    xoaDonDangKy
+    xoaDonDangKy,
+    kiemTraThoiGianDangKy
 };

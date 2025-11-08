@@ -6,3 +6,5 @@ const isRegistrationOpen = () => {
 
     return (startDate <= currentDate && currentDate <= endDate);
 };
+
+module.exports  = { isRegistrationOpen };

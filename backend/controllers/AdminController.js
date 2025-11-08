@@ -50,6 +50,7 @@ const layDonDangKyHoc = async (req, res) => {
     }
 };
 
+
 // Duyệt một đơn đăng ký:
 // lấy id trong req để biết là đơn nào
 // ấn submit --> trangThaiMoi = duyệt, lấy trangThaiMoi trong request body
@@ -686,8 +687,8 @@ const xoaGiangVien = async (req, res) => {
 
 module.exports = {
     layDonDangKyHoc,
-        layThongTinCaNhan,
-        xuLyDonDangKyHoc,
+    layThongTinCaNhan,
+    xuLyDonDangKyHoc,
 
     taoMonHoc,
     layTatCaMonHoc,
