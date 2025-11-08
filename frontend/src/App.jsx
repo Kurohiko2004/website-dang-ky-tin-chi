@@ -46,7 +46,6 @@ function App() {
         {/* --- Route cho Admin --- */}
         <Route path="admin/mon-hoc" element={<AdminMonHocCRUDPage />} />
         <Route path="admin/lop-tin-chi" element={<AdminLopTinChiCRUDPage />} />
-        <Route path="admin/duyet-don" element={<AdminApprovePage />} />
 
         {/* Các route con khác sẽ render bên trong <Outlet /> của DashboardLayout */}
       </Route>

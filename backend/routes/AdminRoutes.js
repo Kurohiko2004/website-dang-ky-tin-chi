@@ -6,7 +6,8 @@ const { authenticateToken, isAdmin } = require('../middleware/authMiddleware');
 router.get('/thong-tin', authenticateToken, isAdmin, adminController.layThongTinCaNhan);
 
 router.get('/duyet-don', authenticateToken, isAdmin, adminController.layDonDangKyHoc);
-// router.put('/duyet-don/:id', authenticateToken, isAdmin, adminController.xuLyDonDangKyHoc);
+router.put('/duyet-don/:id', authenticateToken, isAdmin, adminController.xuLyDonDangKyHoc);
+
 
 
 router.route('/mon-hoc')

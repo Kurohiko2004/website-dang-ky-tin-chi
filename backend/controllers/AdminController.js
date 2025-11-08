@@ -54,86 +54,86 @@ const layDonDangKyHoc = async (req, res) => {
 // lấy id trong req để biết là đơn nào
 // ấn submit --> trangThaiMoi = duyệt, lấy trangThaiMoi trong request body
 // tìm donDangKy trong csdl theo id, nếu tìm được thì gán trangThaiMoi vao DonDangKy.trangThai
-// const xuLyDonDangKyHoc = async (req, res) => {
-//     // Start a transaction for consistency
-//     const t = await db.sequelize.transaction();
-//     try {
-//         const { id } = req.params;
-//         const { trangThaiMoi } = req.body;
+const xuLyDonDangKyHoc = async (req, res) => {
+    // Start a transaction for consistency
+    const t = await db.sequelize.transaction();
+    try {
+        const { id } = req.params;
+        const { trangThaiMoi } = req.body;
 
-//         // Input validation for trangThaiMoi
-//         if (!['Đã duyệt', 'Từ chối'].includes(trangThaiMoi)) {
-//             await t.rollback(); // Rollback immediately on invalid input
-//             return res.status(400).json({ message: 'Trạng thái mới không hợp lệ. Chỉ chấp nhận "Đã duyệt" hoặc "Từ chối".' });
-//         }
+        // Input validation for trangThaiMoi
+        if (!['Đã duyệt', 'Từ chối'].includes(trangThaiMoi)) {
+            await t.rollback(); // Rollback immediately on invalid input
+            return res.status(400).json({ message: 'Trạng thái mới không hợp lệ. Chỉ chấp nhận "Đã duyệt" hoặc "Từ chối".' });
+        }
 
-//         // Find the registration request within the transaction
-//         const donDangKy = await db.DangKyHoc.findByPk(id, {
-//             transaction: t,
-//             lock: t.LOCK.UPDATE // Lock the row during the transaction
-//         });
+        // Find the registration request within the transaction
+        const donDangKy = await db.DangKyHoc.findByPk(id, {
+            transaction: t,
+            lock: t.LOCK.UPDATE // Lock the row during the transaction
+        });
 
-//         if (!donDangKy) {
-//             await t.rollback();
-//             return res.status(404).json({ message: 'Không tìm thấy đơn đăng ký!' });
-//         }
+        if (!donDangKy) {
+            await t.rollback();
+            return res.status(404).json({ message: 'Không tìm thấy đơn đăng ký!' });
+        }
 
-//         // --- ADDED CHECK: Only perform check if APPROVING ---
-//         if (trangThaiMoi === 'Đã duyệt' && donDangKy.trangThai !== 'Đã duyệt') { // Also check if it's not already approved
-//             // Get the class (LopTinChi) information
-//             const lopTinChi = await db.LopTinChi.findByPk(donDangKy.LopTinChi_id, {
-//                 attributes: ['id', 'soLuongToiDa'],
-//                 transaction: t // Ensure consistent read
-//             });
+        // --- ADDED CHECK: Only perform check if APPROVING ---
+        if (trangThaiMoi === 'Đã duyệt' && donDangKy.trangThai !== 'Đã duyệt') { // Also check if it's not already approved
+            // Get the class (LopTinChi) information
+            const lopTinChi = await db.LopTinChi.findByPk(donDangKy.LopTinChi_id, {
+                attributes: ['id', 'soLuongToiDa'],
+                transaction: t // Ensure consistent read
+            });
 
-//             // Should not happen if data is consistent, but good to check
-//             if (!lopTinChi) {
-//                 throw new Error(`Lớp tín chỉ ${donDangKy.LopTinChi_id} liên kết với đơn đăng ký không tồn tại.`);
-//             }
+            // Should not happen if data is consistent, but good to check
+            if (!lopTinChi) {
+                throw new Error(`Lớp tín chỉ ${donDangKy.LopTinChi_id} liên kết với đơn đăng ký không tồn tại.`);
+            }
 
-//             // Check capacity if soLuongToiDa is set
-//             if (lopTinChi.soLuongToiDa !== null && lopTinChi.soLuongToiDa > 0) {
-//                 const soLuongHienTai = await db.DangKyHoc.count({
-//                     where: {
-//                         LopTinChi_id: donDangKy.LopTinChi_id,
-//                         trangThai: 'Đã duyệt' // Count only approved students
-//                     },
-//                     transaction: t // Count within the transaction
-//                 });
+            // Check capacity if soLuongToiDa is set
+            if (lopTinChi.soLuongToiDa !== null && lopTinChi.soLuongToiDa > 0) {
+                const soLuongHienTai = await db.DangKyHoc.count({
+                    where: {
+                        LopTinChi_id: donDangKy.LopTinChi_id,
+                        trangThai: 'Đã duyệt' // Count only approved students
+                    },
+                    transaction: t // Count within the transaction
+                });
 
-//                 // If the class is full or over capacity
-//                 if (soLuongHienTai >= lopTinChi.soLuongToiDa) {
-//                     await t.rollback(); // Rollback the transaction
-//                     return res.status(400).json({ // Use 400 Bad Request as the action cannot be fulfilled
-//                         message: `Không thể duyệt đơn đăng ký. Lớp tín chỉ '${lopTinChi.id}' đã đạt số lượng tối đa (${lopTinChi.soLuongToiDa}).`
-//                     });
-//                 }
-//             }
-//             // If capacity check passes (or no limit), proceed to update status
-//         }
-//         // --- END OF ADDED CHECK ---
+                // If the class is full or over capacity
+                if (soLuongHienTai >= lopTinChi.soLuongToiDa) {
+                    await t.rollback(); // Rollback the transaction
+                    return res.status(400).json({ // Use 400 Bad Request as the action cannot be fulfilled
+                        message: `Không thể duyệt đơn đăng ký. Lớp tín chỉ '${lopTinChi.id}' đã đạt số lượng tối đa (${lopTinChi.soLuongToiDa}).`
+                    });
+                }
+            }
+            // If capacity check passes (or no limit), proceed to update status
+        }
+        // --- END OF ADDED CHECK ---
 
-//         // Update the status (works for both 'Đã duyệt' and 'Từ chối')
-//         donDangKy.trangThai = trangThaiMoi;
-//         await donDangKy.save({ transaction: t }); // Save within the transaction
+        // Update the status (works for both 'Đã duyệt' and 'Từ chối')
+        donDangKy.trangThai = trangThaiMoi;
+        await donDangKy.save({ transaction: t }); // Save within the transaction
 
-//         // If successful, commit the transaction
-//         await t.commit();
+        // If successful, commit the transaction
+        await t.commit();
 
-//         res.status(200).json({
-//             message: 'Cập nhật đơn đăng ký thành công!',
-//             data: donDangKy
-//         });
+        res.status(200).json({
+            message: 'Cập nhật đơn đăng ký thành công!',
+            data: donDangKy
+        });
 
-//     } catch (error) {
-//         // Ensure rollback happens on any error during the try block
-//         await t.rollback();
-//         res.status(500).json({
-//             message: 'Lỗi server - Internal Server Error',
-//             error: error.message
-//         });
-//     }
-// };
+    } catch (error) {
+        // Ensure rollback happens on any error during the try block
+        await t.rollback();
+        res.status(500).json({
+            message: 'Lỗi server - Internal Server Error',
+            error: error.message
+        });
+    }
+};
 
 
 // --- CRUD MÔN HỌC ---
@@ -687,6 +687,7 @@ const xoaGiangVien = async (req, res) => {
 module.exports = {
     layDonDangKyHoc,
         layThongTinCaNhan,
+        xuLyDonDangKyHoc,
 
     taoMonHoc,
     layTatCaMonHoc,
