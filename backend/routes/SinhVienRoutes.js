@@ -8,6 +8,7 @@ router.get('/thong-tin', authenticateToken, isSinhVien, sinhVienController.layTh
 router.get('/lop-tin-chi', authenticateToken, isSinhVien, sinhVienController.layCacLopDangMo);
 router.get('/dang-ky-hien-tai', authenticateToken, isSinhVien, sinhVienController.layDonDangKyHienTai);
 router.post('/dang-ky', authenticateToken, isSinhVien, sinhVienController.taoDonDangKy);
+router.delete('/dang-ky/:id', authenticateToken, isSinhVien, sinhVienController.xoaDonDangKy);
 
 router.get('/lich-hoc', authenticateToken, isSinhVien, sinhVienController.layLichHoc);
 router.get('/ket-qua', authenticateToken, isSinhVien, sinhVienController.xemDiem);
