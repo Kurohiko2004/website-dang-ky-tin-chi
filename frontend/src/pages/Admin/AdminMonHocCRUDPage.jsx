@@ -1,6 +1,6 @@
 // src/pages/Admin/AdminCourseCRUDPage.jsx
-import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../../contexts/AuthContext'; // Để đảm bảo chỉ Admin truy cập (dù đã có ProtectedRoute)
+import React, { useState, useEffect } from 'react';
+import SearchBar from '../../components/common/SearchBar';
 import api from '../../lib/api';
 import { Search, BookOpen, Edit2, Trash2, Plus, X, Save, AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -25,7 +25,6 @@ const initialFormState = {
 };
 
 function AdminMonHocCRUDPage() {
-    const { user } = useContext(AuthContext); // Lấy thông tin user để kiểm tra vai trò (thêm lớp bảo vệ)
     const [courses, setCourses] = useState([]); // Danh sách môn học từ API
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -205,16 +204,11 @@ function AdminMonHocCRUDPage() {
                     </button>
                 </div>
                 {/* Search Bar */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên môn hoặc mã môn..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                </div>
+                <SearchBar
+                    searchTerm={searchTerm}
+                    onSearchTermChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm theo tên môn, mã môn..."
+                />
             </div>
 
             {/* Results Section - Hiển thị dạng thẻ */}

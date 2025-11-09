@@ -1,13 +1,12 @@
-// src/pages/Student/DangKyHocPhanPage.jsx
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
 import RegistrationList from '../../components/RegistrationList';
 import CreditSummary from '../../components/CreditSummary';
 import Notification from '../../components/common/Notification'; 
 import AvailableCoursesTable from '../../components/AvailableCoursesTable';
+import SearchBar from '../../components/common/SearchBar';
 
 import api from '../../lib/api'; 
-import { User, Calendar, Clock, Users, CheckCircle } from 'lucide-react';
 
 
 function CourseRegistrationPage() {
@@ -15,10 +14,13 @@ function CourseRegistrationPage() {
     const [availableCourses, setAvailableCourses] = useState([]); // Danh sách lớp lấy từ API
     const [selectedCourses, setSelectedCourses] = useState([]); // Danh sách lớp SV đã chọn
     const [registeredCourses, setRegisteredCourses] = useState([]); // <-- STATE MỚI: Lớp đã đăng ký/chờ duyệt
+
+    const [searchTerm, setSearchTerm] = useState('');
+
     const [loading, setLoading] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false); // State loading riêng cho nút submit
     const [error, setError] = useState(null);
-    const [notification, setNotification] = useState(null); // { message, type }
+    const [notification, setNotification] = useState(null); 
 
     const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
@@ -63,7 +65,7 @@ function CourseRegistrationPage() {
             // 2. Lưu lại danh sách lớp đã đăng ký
             const formattedRegistered = registeredRes.data.map(dk => ({
                 ...dk,
-                dangkyhoc_id: dk.id // API 'dang-ky-hien-tai' trả về 'id' của DangKyHoc
+                dangkyhoc_id: dk.dangkyhoc_id // API 'dang-ky-hien-tai' trả về 'id' của DangKyHoc
             }));
             setRegisteredCourses(formattedRegistered); // Dữ liệu đã được format từ backend
 
@@ -174,11 +176,18 @@ function CourseRegistrationPage() {
         setError(null);
 
         // Lấy ID đơn đăng ký cần xóa
-        const dangkyhoc_id = course.dangkyhoc_id; 
+        const DonCanXoaId = course.dangkyhoc_id;
+        console.log(DonCanXoaId);
+
+        if (!DonCanXoaId) {
+            showNotification('Lỗi: Không tìm thấy ID đơn đăng ký.', 'error');
+            setSubmitLoading(false);
+            return;
+        }
 
         try {
             // Gọi API DELETE: router.delete('/dang-ky/:id', ...)
-            await api.delete(`/sinh-vien/dang-ky/${dangkyhoc_id}`); 
+            await api.delete(`/sinh-vien/dang-ky/${DonCanXoaId}`); 
             showNotification(`Đã hủy đăng ký môn học "${course.courseName}" thành công!`, 'success');
 
             // Cập nhật lại danh sách đăng ký sau khi xóa thành công
@@ -240,6 +249,15 @@ function CourseRegistrationPage() {
 
     if (loading) return <div className="p-6 text-center">Đang tải danh sách lớp học phần...</div>;
 
+    
+    // // Tìm kiếm theo Mã lớp (id), Tên môn, Mã môn, hoặc Giảng viên
+    const filteredCourses = availableCourses.filter(course =>
+        (course.classCode && course.classCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.courseName && course.courseName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.courseCode && course.courseCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (course.teacher && course.teacher.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
     return (
         <div className="space-y-6">
             {/* Notification Area */}
@@ -258,9 +276,17 @@ function CourseRegistrationPage() {
                 </div>
             )}
 
+            <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                <SearchBar
+                    searchTerm={searchTerm}
+                    onSearchTermChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm theo mã lớp, tên môn, mã môn hoặc giảng viên..."
+                />
+            </div>
+
             {/* Available Courses Table - Bảng danh sách lớp tín chỉ */}
             <AvailableCoursesTable
-                availableCourses={availableCourses}
+                availableCourses={filteredCourses}
                 selectedCourses={selectedCourses}
                 registeredCourses={registeredCourses}
                 loading={loading}
@@ -290,10 +316,6 @@ function CourseRegistrationPage() {
                 maxCredits={MAX_CREDITS}
                 isRegistrationOpen={isRegistrationOpen}
             />
-
-            
-
-
         </div>
     );
 }

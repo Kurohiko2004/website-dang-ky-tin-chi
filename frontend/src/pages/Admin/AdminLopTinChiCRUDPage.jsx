@@ -1,6 +1,6 @@
 // src/pages/Admin/AdminClassCRUDPage.jsx
 import React, { useState, useEffect } from 'react';
-import { AuthContext } from '../../contexts/AuthContext';
+import SearchBar from '../../components/common/SearchBar';
 import api from '../../lib/api';
 import { Search, Edit2, Trash2, Plus, X, Save, AlertCircle, CheckCircle, Users, Calendar, Clock, User, BookOpen } from 'lucide-react';
 
@@ -213,17 +213,13 @@ function AdminLopTinChiCRUDPage() {
                         Thêm lớp mới
                     </button>
                 </div>
+                
                 {/* Search Bar */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo mã lớp, tên môn, giảng viên..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                </div>
+                <SearchBar
+                    searchTerm={searchTerm}
+                    onSearchTermChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm theo mã lớp, tên môn, giảng viên..."
+                />
             </div>
 
             {/* Results Section - Hiển thị dạng danh sách thẻ */}

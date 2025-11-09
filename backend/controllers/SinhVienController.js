@@ -423,7 +423,9 @@ const layDonDangKyHienTai = async (req, res) => {
 
         // Format lại dữ liệu cho frontend dễ sử dụng
         const formattedData = dangKyHienTai.map(dk => ({
-            id: dk.LopTinChi.id,
+            dangkyhoc_id: dk.id, // ID của đơn đăng ký (Vd: 29)
+            id: dk.LopTinChi.id,  // ID của lớp tín chỉ (Vd: "LTC005")
+
             classCode: dk.LopTinChi.id,
             courseName: dk.LopTinChi.MonHoc.ten,
             courseCode: dk.LopTinChi.MonHoc.id,
